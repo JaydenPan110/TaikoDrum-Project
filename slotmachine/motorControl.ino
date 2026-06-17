@@ -1,6 +1,4 @@
-Here is the extracted code containing only the parts responsible for controlling and calibrating the stepper motors and the servo motor, along with all the necessary constants, variables, types, and pin mappings they require.
 
-C++
 #include <AccelStepper.h>
 #include <Servo.h>
 
