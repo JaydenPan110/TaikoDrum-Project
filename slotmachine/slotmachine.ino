@@ -5,9 +5,10 @@
 #include <pitches.h>
 #include <Servo.h>
 
+#define LDR_PIN A0
 #define BUZZER_PIN 10
-#define TRIG_PIN 5
-#define ECHO_PIN 6
+#define BUTTON_PIN 2
+
 
 const int servoPin = 9;
 
@@ -193,16 +194,25 @@ int coinsToDispense = 0;
 int dispenseStep = 0; // 0=idle, 1=open, 2=wait_fall, 3=close, 4=wait_next
 unsigned long dispenseTimer = 0;
 
-// Non-blocking state for ultrasonic sensor
-unsigned long sensorTimer = 0;
+#define LDR_THRESHOLD 3
+
+// Non-blocking state for LDR
+unsigned long ldrTimer = 0;
+int prevLdrValue = 0;
+
+// Button state
+int lastButtonState = HIGH;
+int buttonState = HIGH;
+unsigned long lastDebounceTime = 0;
+const unsigned long debounceDelay = 50;
 
 void setup()
 {
   Serial.begin(9600);
 
   pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
 
   coinServo.attach(servoPin);
   coinServo.write(0);
@@ -215,33 +225,45 @@ void loop()
 {
   int size = sizeof(durations) / sizeof(int);
 
-  // --- Buzzer (non-blocking) ---
-  if (!waitingForNote) {
-    noteDuration = 1000 / durations[currentNote];
-    tone(BUZZER_PIN, melody[currentNote], noteDuration);
-    noteTimer = millis();
-    waitingForNote = true;
-  } else {
-    int pause = noteDuration * 1.10;
-    if (millis() - noteTimer >= pause) {
-      currentNote = (currentNote + 1) % size;
-      waitingForNote = false;
+  // // --- Buzzer (non-blocking) ---
+  // if (!waitingForNote) {
+  //   noteDuration = 1000 / durations[currentNote];
+  //   tone(BUZZER_PIN, melody[currentNote], noteDuration);
+  //   noteTimer = millis();
+  //   waitingForNote = true;
+  // } else {
+  //   int pause = noteDuration * 1.10;
+  //   if (millis() - noteTimer >= pause) {
+  //     currentNote = (currentNote + 1) % size;
+  //     waitingForNote = false;
+  //   }
+  // }
+
+  // --- Button (non-blocking, debounced) ---
+  int reading = digitalRead(BUTTON_PIN);
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+    lastButtonState = reading;
+  }
+  if (millis() - lastDebounceTime >= debounceDelay) {
+    if (lastButtonState == LOW && buttonState == HIGH) {
+      Serial.println("pushed");
     }
+    buttonState = lastButtonState;
   }
 
-  // --- Ultrasonic sensor (non-blocking, every 100ms) ---
-  if (millis() - sensorTimer >= 100) {
-    sensorTimer = millis();
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-    long duration = pulseIn(ECHO_PIN, HIGH);
-    int distance = duration * 0.034 / 2;
-    Serial.print("Distance: ");
-    Serial.print(distance);
-    Serial.println(" cm");
+  // --- LDR (non-blocking, every 10ms) ---
+  if (millis() - ldrTimer >= 10) {
+    ldrTimer = millis();
+    int ldrValue = analogRead(LDR_PIN);
+    int diff = ldrValue - prevLdrValue;
+    if (diff < 0 && abs(diff) > LDR_THRESHOLD) {
+      Serial.println("beep");
+      tone(BUZZER_PIN, 1000, 50);
+      prevLdrValue = ldrValue;
+    } else if (diff > 0 && abs(diff) > LDR_THRESHOLD) {
+      prevLdrValue = ldrValue;
+    }
   }
 
   // --- Dispenser (non-blocking) ---
