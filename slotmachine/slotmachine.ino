@@ -1,5 +1,6 @@
 #include <pitches.h>
 #include <Servo.h>
+#include <IRremote.hpp>
 
 #define LDR_PIN A0
 #define BUZZER_PIN 10
@@ -9,6 +10,8 @@
 #define LED_G 5
 #define LED_B 3
 
+
+#define IR_RECEIVE_PIN 13
 
 const int servoPin = 9;
 
@@ -265,6 +268,7 @@ void hsvToRgb(unsigned int h, byte &r, byte &g, byte &b)
 void setup()
 {
   Serial.begin(9600);
+  IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK);
 
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -344,6 +348,13 @@ void loop()
         (breathB * greenFadeLevel) / 255
       );
     }
+  }
+
+  // --- IR Remote (non-blocking) ---
+  if (IrReceiver.decode()) {
+    Serial.print("IR: 0x");
+    Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
+    IrReceiver.resume();
   }
 
   // // --- Buzzer (non-blocking) ---
