@@ -425,29 +425,33 @@ void loop()
     joyTimer = millis();
     int joyY = analogRead(A1);
     int diff = joyY - prevJoyY;
-    if (diff < 0 && abs(diff) > JOY_THRESHOLD) {
-      if (coinDropped) {
-        Serial.println("spin");
-        Serial.write(mystr, 5);
-        coinDropped = false;
-        spinning = true;
-        spinEndTime = millis() + 5000;
-        breathR = 255;
-        breathG = 0;
-        breathB = 0;
-        greenFadeLevel = 0;
-        greenFadeRising = true;
-        greenFadeTimer = millis();
-      } else {
-        Serial.println("down");
-        if (!rainbowMode) {
-          breathR = 0;
-          breathG = 255;
-          breathB = 255;
+    if (abs(diff) > 3) {
+      prevJoyY = joyY;
+      Serial.print("Y");
+      Serial.println(joyY);
+      if (diff < 0 && abs(diff) > JOY_THRESHOLD) {
+        if (coinDropped) {
+          Serial.println("spin");
+          Serial.write(mystr, 5);
+          coinDropped = false;
+          spinning = true;
+          spinEndTime = millis() + 5000;
+          breathR = 255;
+          breathG = 0;
+          breathB = 0;
+          greenFadeLevel = 0;
+          greenFadeRising = true;
+          greenFadeTimer = millis();
+        } else {
+          Serial.println("down");
+          if (!rainbowMode) {
+            breathR = 0;
+            breathG = 255;
+            breathB = 255;
+          }
         }
       }
     }
-    prevJoyY = joyY;
   }
 
   // --- Dispenser (non-blocking) ---

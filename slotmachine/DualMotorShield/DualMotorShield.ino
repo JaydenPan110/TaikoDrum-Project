@@ -37,6 +37,7 @@ AccelStepper stepper3(AccelStepper::DRIVER, STEPPER3_STEP_PIN, STEPPER3_DIR_PIN)
 String inputString = "";
 bool spinning = false;
 unsigned long spinEndTime = 0;
+int joyYValue = 512;
 
 void runBounce() {
     stepper1.run();
@@ -89,6 +90,12 @@ void loop()
         if (c == '\n') {
             if (inputString == "spin") {
                 spinMotors();
+            } else if (inputString.startsWith("Y")) {
+                joyYValue = inputString.substring(1).toInt();
+                float speed = map(joyYValue, 0, 1023, 200, 1000);
+                stepper1.setSpeed(speed);
+                stepper2.setSpeed(speed);
+                stepper3.setSpeed(speed);
             }
             inputString = "";
         } else if (c != '\r') {
