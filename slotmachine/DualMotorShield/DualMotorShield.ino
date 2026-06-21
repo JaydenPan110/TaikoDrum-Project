@@ -27,7 +27,6 @@
 #define STEPPER3_STEP_PIN 4
 
 #define SPIN_DURATION_MS 5000
-#define BOUNCE_TARGET 2000
 
 // Define some steppers and the pins the will use
 AccelStepper stepper1(AccelStepper::DRIVER, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
@@ -38,19 +37,6 @@ String inputString = "";
 bool spinning = false;
 unsigned long spinEndTime = 0;
 int joyYValue = 512;
-
-void runBounce() {
-    stepper1.run();
-    stepper2.run();
-    stepper3.run();
-
-    if (stepper1.distanceToGo() == 0)
-        stepper1.moveTo(-stepper1.currentPosition());
-    if (stepper2.distanceToGo() == 0)
-        stepper2.moveTo(-stepper2.currentPosition());
-    if (stepper3.distanceToGo() == 0)
-        stepper3.moveTo(-stepper3.currentPosition());
-}
 
 void spinMotors() {
     spinning = true;
@@ -67,17 +53,14 @@ void setup()
     stepper1.setMaxSpeed(1000.0);
     stepper1.setAcceleration(800.0);
     stepper1.setSpeed(1000.0);
-    stepper1.moveTo(BOUNCE_TARGET);
 
     stepper2.setMaxSpeed(1000.0);
     stepper2.setAcceleration(800.0);
     stepper2.setSpeed(1000.0);
-    stepper2.moveTo(BOUNCE_TARGET);
 
     stepper3.setMaxSpeed(1000.0);
     stepper3.setAcceleration(800.0);
     stepper3.setSpeed(1000.0);
-    stepper3.moveTo(BOUNCE_TARGET);
 
     Serial.println("MOTOR_READY");
 }
@@ -111,11 +94,6 @@ void loop()
             spinning = false;
             digitalWrite(LED_BUILTIN, LOW);
             Serial.println("DONE");
-            stepper1.moveTo(stepper1.currentPosition() + BOUNCE_TARGET);
-            stepper2.moveTo(stepper2.currentPosition() + BOUNCE_TARGET);
-            stepper3.moveTo(stepper3.currentPosition() + BOUNCE_TARGET);
         }
-    } else {
-        runBounce();
     }
 }
