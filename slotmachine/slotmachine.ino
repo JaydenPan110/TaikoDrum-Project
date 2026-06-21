@@ -1,6 +1,10 @@
 #include <pitches.h>
 #include <Servo.h>
 #include <IRremote.hpp>
+#include <Adafruit_NeoPixel.h>
+
+#define IR_RECEIVE_PIN 12
+#define IR_PLAY_BUTTON 0xEA15FF00
 
 #define LDR_PIN A0
 #define BUZZER_PIN 10
@@ -10,10 +14,11 @@
 #define LED_G 5
 #define LED_B 3
 
-
-#define IR_RECEIVE_PIN 13
-
 const int servoPin = 9;
+#define NEO_PIN 11
+#define NUM_LEDS 8
+
+Adafruit_NeoPixel strip(NUM_LEDS, NEO_PIN, NEO_GRB + NEO_KHZ800);
 
 char mystr[6] = "Hello";
 
@@ -239,6 +244,9 @@ int breathB = 255;
 bool spinning = false;
 unsigned long spinEndTime = 0;
 
+unsigned long neoPrev = 0;
+unsigned int neoHue = 0;
+
 void setColor(int r, int g, int b)
 {
   analogWrite(LED_R, 255 - r);
@@ -265,6 +273,16 @@ void hsvToRgb(unsigned int h, byte &r, byte &g, byte &b)
   }
 }
 
+void neoRainbow() {
+  for (int i = 0; i < NUM_LEDS; i++) {
+    int hue = (neoHue + i * 45) % 360;
+    byte r, g, b;
+    hsvToRgb(hue, r, g, b);
+    strip.setPixelColor(i, r, g, b);
+  }
+  strip.show();
+}
+
 void setup()
 {
   Serial.begin(9600);
@@ -280,9 +298,11 @@ void setup()
   coinServo.write(0);
   servoCurrentAngle = 0;
 
-  coinsToDispense = 3;
-  dispenseStep = 1;
-  dispenseTimer = millis();
+  coinsToDispense = 0;
+  dispenseStep = 0;
+
+  strip.begin();
+  strip.show();
 }
 
 void loop()
@@ -352,9 +372,21 @@ void loop()
 
   // --- IR Remote (non-blocking) ---
   if (IrReceiver.decode()) {
+    if (IrReceiver.decodedIRData.decodedRawData == IR_PLAY_BUTTON && dispenseStep == 0) {
+      coinsToDispense = 1;
+      dispenseStep = 1;
+      dispenseTimer = millis();
+    }
     Serial.print("IR: 0x");
     Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
     IrReceiver.resume();
+  }
+
+  // --- NeoPixel Rainbow (non-blocking) ---
+  if (millis() - neoPrev >= 30) {
+    neoPrev = millis();
+    neoRainbow();
+    neoHue = (neoHue + 5) % 360;
   }
 
   // // --- Buzzer (non-blocking) ---
