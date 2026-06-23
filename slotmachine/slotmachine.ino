@@ -2,6 +2,39 @@
 #include <Servo.h>
 #include <IRremote.hpp>
 #include <Adafruit_NeoPixel.h>
+#include <AccelStepper.h>
+
+enum Symbol {
+  SYM_CHERRY,
+  SYM_SEVEN,
+  SYM_LIMON,
+  SYM_BAR,
+  SYM_MANDERIN,
+  SYM_WATERMELON,
+  SYM_BELL,
+  SYM_BAR2,
+  SYM_BANANA,
+  SYM_GRAPE
+};
+
+const String SYMBOL_NAMES[] = {
+  "CHERRY",
+  "Seven",
+  "LIMON",
+  "BAR",
+  "MANDERIN",
+  "WATERMELON",
+  "BELL",
+  "BAR2",
+  "BANANA",
+  "GRAPE"
+};
+
+static const int PHYS_TO_LOG[10] = {6, 7, 8, 9, 0, 1, 2, 3, 4, 5};
+
+int getSymbol(long position) {
+  return PHYS_TO_LOG[((position + 80) % 200) / 20];
+}
 
 #define IR_RECEIVE_PIN 12
 #define IR_PLAY_BUTTON 0xEA15FF00
@@ -20,7 +53,16 @@ const int servoPin = 9;
 
 Adafruit_NeoPixel strip(NUM_LEDS, NEO_PIN, NEO_GRB + NEO_KHZ800);
 
-char mystr[6] = "Hello";
+#define STEP_X A2
+#define STEP_Y A3
+#define STEP_Z A4
+#define DIR_PIN A5
+
+#define SPIN_TARGET 50000
+
+AccelStepper stepperX(AccelStepper::DRIVER, STEP_X, DIR_PIN);
+AccelStepper stepperY(AccelStepper::DRIVER, STEP_Y, DIR_PIN);
+AccelStepper stepperZ(AccelStepper::DRIVER, STEP_Z, DIR_PIN);
 
 Servo coinServo;
 
@@ -193,21 +235,123 @@ int durations[] = {
   8, 8, 2
 };
 
+int coinMelody[] = {
+  NOTE_C4, REST, NOTE_G4, REST, NOTE_AS4, NOTE_C5, NOTE_AS4, REST, NOTE_F4, NOTE_DS4, REST,
+  NOTE_C4, REST, NOTE_G4, REST, NOTE_AS4, NOTE_C5, NOTE_AS4, REST, NOTE_F4, NOTE_DS4, REST,
+  NOTE_C4, REST, NOTE_G4, REST, NOTE_AS4, NOTE_C5, NOTE_AS4, REST, NOTE_F4, NOTE_DS4, REST,
+
+  NOTE_C4, REST, NOTE_E4, REST, NOTE_G4, NOTE_A4, NOTE_AS4,
+  NOTE_C5, REST, NOTE_C5, REST, NOTE_AS4, REST, NOTE_A4, REST,
+  NOTE_AS4, REST, NOTE_AS4, NOTE_C5, REST, NOTE_AS4, NOTE_A4, REST,
+  REST,
+  NOTE_C5, REST, NOTE_AS4, REST, NOTE_A4, REST, NOTE_AS4, REST, NOTE_E5,
+  REST,
+
+  NOTE_C5, REST, NOTE_C5, REST, NOTE_AS4, REST, NOTE_A4, REST,
+  NOTE_AS4, REST, NOTE_AS4, NOTE_C5, REST, NOTE_AS4, NOTE_A4, REST,
+  REST,
+  NOTE_C5, REST, NOTE_AS4, REST, NOTE_A4, REST, NOTE_AS4, REST, NOTE_E4,
+  REST,
+};
+
+int coinDurations[] = {
+  4, 8, 4, 8, 4, 8, 8, 16, 8, 8, 16,
+  4, 8, 4, 8, 4, 8, 8, 16, 8, 8, 16,
+  4, 8, 4, 8, 4, 8, 8, 16, 8, 8, 16,
+
+  4, 8, 4, 8, 4, 4, 4,
+  8, 16, 8, 16, 8, 16, 8, 16,
+  8, 16, 8, 8, 16, 8, 8, 16,
+  4,
+  8, 16, 8, 16, 8, 16, 8, 4, 8,
+  4,
+
+  8, 16, 8, 16, 8, 16, 8, 16,
+  8, 16, 8, 8, 16, 8, 8, 16,
+  4,
+  8, 16, 8, 16, 8, 16, 8, 4, 8,
+  1
+};
+
+int spinMelody[] = {
+  NOTE_E5, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_C5, NOTE_B4,
+  NOTE_A4, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_D5, NOTE_C5,
+  NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5,
+  NOTE_C5, NOTE_A4, NOTE_A4, NOTE_A4, NOTE_B4, NOTE_C5,
+
+  NOTE_D5, NOTE_F5, NOTE_A5, NOTE_G5, NOTE_F5,
+  NOTE_E5, NOTE_C5, NOTE_E5, NOTE_D5, NOTE_C5,
+  NOTE_B4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5,
+  NOTE_C5, NOTE_A4, NOTE_A4, REST,
+
+  NOTE_E5, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_C5, NOTE_B4,
+  NOTE_A4, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_D5, NOTE_C5,
+  NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5,
+  NOTE_C5, NOTE_A4, NOTE_A4, NOTE_A4, NOTE_B4, NOTE_C5,
+
+  NOTE_D5, NOTE_F5, NOTE_A5, NOTE_G5, NOTE_F5,
+  NOTE_E5, NOTE_C5, NOTE_E5, NOTE_D5, NOTE_C5,
+  NOTE_B4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5,
+  NOTE_C5, NOTE_A4, NOTE_A4, REST,
+
+  NOTE_E5, NOTE_C5,
+  NOTE_D5, NOTE_B4,
+  NOTE_C5, NOTE_A4,
+  NOTE_GS4, NOTE_B4, REST,
+  NOTE_E5, NOTE_C5,
+  NOTE_D5, NOTE_B4,
+  NOTE_C5, NOTE_E5, NOTE_A5,
+  NOTE_GS5
+};
+
+int spinDurations[] = {
+  4, 8, 8, 4, 8, 8,
+  4, 8, 8, 4, 8, 8,
+  4, 8, 4, 4,
+  4, 4, 8, 4, 8, 8,
+
+  4, 8, 4, 8, 8,
+  4, 8, 4, 8, 8,
+  4, 8, 8, 4, 4,
+  4, 4, 4, 4,
+
+  4, 8, 8, 4, 8, 8,
+  4, 8, 8, 4, 8, 8,
+  4, 8, 4, 4,
+  4, 4, 8, 4, 8, 8,
+
+  4, 8, 4, 8, 8,
+  4, 8, 4, 8, 8,
+  4, 8, 8, 4, 4,
+  4, 4, 4, 4,
+
+  2, 2,
+  2, 2,
+  2, 2,
+  2, 4, 8,
+  2, 2,
+  2, 2,
+  4, 4, 2,
+  2
+};
+
 // Non-blocking state for buzzer
 int currentNote = 0;
 unsigned long noteTimer = 0;
 int noteDuration = 0;
 bool waitingForNote = false;
+bool playingCoinSong = false;
+bool playingSpinSong = false;
 
 // Non-blocking state for dispenser
 int coinsToDispense = 0;
 int dispenseStep = 0; // 0=idle, 1=open_step, 2=wait_fall, 3=close_step, 4=wait_next
 unsigned long dispenseTimer = 0;
 int servoCurrentAngle = 0;
-#define SERVO_STEP_DELAY 30
+#define SERVO_STEP_DELAY 15
 #define SERVO_ANGLE_STEP 3
 
-#define LDR_THRESHOLD 5
+#define LDR_THRESHOLD 50
 #define JOY_THRESHOLD 50
 
 // Non-blocking state for LDR
@@ -221,6 +365,8 @@ bool coinDropped = false;
 // Non-blocking state for joystick
 unsigned long joyTimer = 0;
 int prevJoyY = 512;
+unsigned long joyDebounceTimer = 0;
+#define JOY_COOLDOWN_MS 300
 
 // Button state
 int lastButtonState = HIGH;
@@ -237,12 +383,12 @@ bool rainbowMode = true;
 unsigned long greenFadeTimer = 0;
 int greenFadeLevel = 0;
 bool greenFadeRising = true;
-unsigned long coinDropLockTimer = 0;
+
 int breathR = 255;
 int breathG = 0;
 int breathB = 255;
 bool spinning = false;
-unsigned long spinEndTime = 0;
+int spinPhase = 0;
 
 unsigned long neoPrev = 0;
 unsigned int neoHue = 0;
@@ -273,6 +419,40 @@ void hsvToRgb(unsigned int h, byte &r, byte &g, byte &b)
   }
 }
 
+void runSteppers() {
+  if (!spinning) return;
+
+  stepperX.run();
+  stepperY.run();
+  stepperZ.run();
+
+  if (spinPhase == 4 && stepperX.distanceToGo() == 0 && stepperY.distanceToGo() == 0 && stepperZ.distanceToGo() == 0) {
+    spinning = false;
+    playingSpinSong = false;
+    spinPhase = 0;
+    coinDropped = false;
+
+    int xSym = getSymbol(stepperX.currentPosition());
+    int ySym = getSymbol(stepperY.currentPosition());
+    int zSym = getSymbol(stepperZ.currentPosition());
+    Serial.print("Symbols: ");
+    Serial.print(SYMBOL_NAMES[xSym]);
+    Serial.print(" ");
+    Serial.print(SYMBOL_NAMES[ySym]);
+    Serial.print(" ");
+    Serial.println(SYMBOL_NAMES[zSym]);
+
+    if (xSym == ySym && ySym == zSym && dispenseStep == 0) {
+      coinsToDispense = 3;
+      dispenseStep = 1;
+      dispenseTimer = millis();
+    }
+
+    rainbowMode = true;
+    rainbowTimer = millis();
+  }
+}
+
 void neoRainbow() {
   for (int i = 0; i < NUM_LEDS; i++) {
     int hue = (neoHue + i * 45) % 360;
@@ -289,7 +469,7 @@ void setup()
   IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK);
 
   pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT);
   pinMode(LED_R, OUTPUT);
   pinMode(LED_G, OUTPUT);
   pinMode(LED_B, OUTPUT);
@@ -303,6 +483,15 @@ void setup()
 
   strip.begin();
   strip.show();
+
+  stepperX.setMaxSpeed(100.0);
+  stepperX.setAcceleration(100.0);
+
+  stepperY.setMaxSpeed(100.0);
+  stepperY.setAcceleration(100.0);
+
+  stepperZ.setMaxSpeed(100.0);
+  stepperZ.setAcceleration(100.0);
 }
 
 void loop()
@@ -311,32 +500,26 @@ void loop()
 
   // --- LED (non-blocking) ---
   if (spinning) {
-    if (millis() >= spinEndTime) {
-      spinning = false;
-      rainbowMode = true;
-      rainbowTimer = millis();
-    } else {
-      if (millis() - greenFadeTimer >= 20) {
-        greenFadeTimer = millis();
-        if (greenFadeRising) {
-          greenFadeLevel += 5;
-          if (greenFadeLevel >= 255) {
-            greenFadeLevel = 255;
-            greenFadeRising = false;
-          }
-        } else {
-          greenFadeLevel -= 5;
-          if (greenFadeLevel <= 0) {
-            greenFadeLevel = 0;
-            greenFadeRising = true;
-          }
+    if (millis() - greenFadeTimer >= 20) {
+      greenFadeTimer = millis();
+      if (greenFadeRising) {
+        greenFadeLevel += 5;
+        if (greenFadeLevel >= 255) {
+          greenFadeLevel = 255;
+          greenFadeRising = false;
         }
-        setColor(
-          (breathR * greenFadeLevel) / 255,
-          (breathG * greenFadeLevel) / 255,
-          (breathB * greenFadeLevel) / 255
-        );
+      } else {
+        greenFadeLevel -= 5;
+        if (greenFadeLevel <= 0) {
+          greenFadeLevel = 0;
+          greenFadeRising = true;
+        }
       }
+      setColor(
+        (breathR * greenFadeLevel) / 255,
+        (breathG * greenFadeLevel) / 255,
+        (breathB * greenFadeLevel) / 255
+      );
     }
   } else if (rainbowMode) {
     if (millis() - rainbowTimer >= 20) {
@@ -370,15 +553,47 @@ void loop()
     }
   }
 
+  // --- Stepper motors (non-blocking) ---
+  runSteppers();
+
   // --- IR Remote (non-blocking) ---
   if (IrReceiver.decode()) {
-    if (IrReceiver.decodedIRData.decodedRawData == IR_PLAY_BUTTON && dispenseStep == 0) {
-      coinsToDispense = 1;
-      dispenseStep = 1;
-      dispenseTimer = millis();
+    if (IrReceiver.decodedIRData.decodedRawData == IR_PLAY_BUTTON && !coinDropped) {
+      coinDropped = true;
+      playingCoinSong = true;
+      currentNote = 0;
+      waitingForNote = false;
+      breathR = 0;
+      breathG = 255;
+      breathB = 0;
+      greenFadeLevel = 0;
+      greenFadeRising = true;
+      greenFadeTimer = millis();
+      if (rainbowMode) {
+        rainbowMode = false;
+        greenFadeLevel = 0;
+        greenFadeRising = true;
+        greenFadeTimer = millis();
+      }
     }
-    Serial.print("IR: 0x");
-    Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
+    if (dispenseStep == 0) {
+      int cmd = IrReceiver.decodedIRData.command;
+      int coins = 0;
+      if (cmd == 12) coins = 1;
+      else if (cmd == 24) coins = 2;
+      else if (cmd == 94) coins = 3;
+      else if (cmd == 8) coins = 4;
+      else if (cmd == 28) coins = 5;
+      else if (cmd == 90) coins = 6;
+      else if (cmd == 66) coins = 7;
+      else if (cmd == 82) coins = 8;
+      else if (cmd == 74) coins = 9;
+      if (coins > 0) {
+        coinsToDispense = coins;
+        dispenseStep = 1;
+        dispenseTimer = millis();
+      }
+    }
     IrReceiver.resume();
   }
 
@@ -389,19 +604,55 @@ void loop()
     neoHue = (neoHue + 5) % 360;
   }
 
-  // // --- Buzzer (non-blocking) ---
-  // if (!waitingForNote) {
-  //   noteDuration = 1000 / durations[currentNote];
-  //   tone(BUZZER_PIN, melody[currentNote], noteDuration);
-  //   noteTimer = millis();
-  //   waitingForNote = true;
-  // } else {
-  //   int pause = noteDuration * 1.10;
-  //   if (millis() - noteTimer >= pause) {
-  //     currentNote = (currentNote + 1) % size;
-  //     waitingForNote = false;
-  //   }
-  // }
+  // --- Buzzer (non-blocking) ---
+  if (playingCoinSong) {
+    int coinSize = sizeof(coinDurations) / sizeof(int);
+    if (!waitingForNote) {
+      noTone(BUZZER_PIN);
+      noteDuration = 1000 / coinDurations[currentNote];
+      if (coinMelody[currentNote] != REST) tone(BUZZER_PIN, coinMelody[currentNote], noteDuration);
+      noteTimer = millis();
+      waitingForNote = true;
+    } else {
+      int pause = noteDuration * 1.10;
+      if (millis() - noteTimer >= pause) {
+        currentNote = (currentNote + 1) % coinSize;
+        noTone(BUZZER_PIN);
+        waitingForNote = false;
+      }
+    }
+  } else if (playingSpinSong) {
+    int spinSize = sizeof(spinDurations) / sizeof(int);
+    if (!waitingForNote) {
+      noTone(BUZZER_PIN);
+      noteDuration = 1000 / spinDurations[currentNote];
+      if (spinMelody[currentNote] != REST) tone(BUZZER_PIN, spinMelody[currentNote], noteDuration);
+      noteTimer = millis();
+      waitingForNote = true;
+    } else {
+      int pause = noteDuration * 1.10;
+      if (millis() - noteTimer >= pause) {
+        currentNote = (currentNote + 1) % spinSize;
+        noTone(BUZZER_PIN);
+        waitingForNote = false;
+      }
+    }
+  } else if (rainbowMode) {
+    if (!waitingForNote) {
+      noTone(BUZZER_PIN);
+      noteDuration = 1000 / durations[currentNote];
+      tone(BUZZER_PIN, melody[currentNote], noteDuration);
+      noteTimer = millis();
+      waitingForNote = true;
+    } else {
+      int pause = noteDuration * 1.10;
+      if (millis() - noteTimer >= pause) {
+        currentNote = (currentNote + 1) % size;
+        noTone(BUZZER_PIN);
+        waitingForNote = false;
+      }
+    }
+  }
 
   // --- Button (non-blocking, debounced) ---
   int reading = digitalRead(BUTTON_PIN);
@@ -411,7 +662,6 @@ void loop()
   }
   if (millis() - lastDebounceTime >= debounceDelay) {
     if (lastButtonState == LOW && buttonState == HIGH) {
-      Serial.println("pushed");
     }
     buttonState = lastButtonState;
   }
@@ -424,24 +674,32 @@ void loop()
       ldrCooldown = false;
     }
 
-    bool calibrating = (millis() < 10000) || (!rainbowMode && millis() - coinDropLockTimer < 10000);
+    bool calibrating = (millis() < 10000);
 
     if (calibrating) {
       prevLdrValue = analogRead(LDR_PIN);
-    } else if (!ldrCooldown) {
+    } else if (!ldrCooldown && !coinDropped) {
       int ldrValue = analogRead(LDR_PIN);
       int diff = ldrValue - prevLdrValue;
       if (diff < 0 && abs(diff) > LDR_THRESHOLD) {
-        Serial.println("beep");
         tone(BUZZER_PIN, 1000, 50);
         prevLdrValue = ldrValue;
         ldrCooldown = true;
         ldrDebounceTimer = millis();
         coinDropped = true;
 
+        playingCoinSong = true;
+        currentNote = 0;
+        waitingForNote = false;
+        breathR = 0;
+        breathG = 255;
+        breathB = 0;
+        greenFadeLevel = 0;
+        greenFadeRising = true;
+        greenFadeTimer = millis();
+
         if (rainbowMode) {
           rainbowMode = false;
-          coinDropLockTimer = millis();
           greenFadeLevel = 0;
           greenFadeRising = true;
           greenFadeTimer = millis();
@@ -459,15 +717,31 @@ void loop()
     int diff = joyY - prevJoyY;
     if (abs(diff) > 3) {
       prevJoyY = joyY;
-      Serial.print("Y");
-      Serial.println(joyY);
-      if (diff < 0 && abs(diff) > JOY_THRESHOLD) {
-        if (coinDropped) {
-          Serial.println("spin");
-          Serial.write(mystr, 5);
-          coinDropped = false;
+      if (diff < 0 && abs(diff) > JOY_THRESHOLD && millis() - joyDebounceTimer >= JOY_COOLDOWN_MS) {
+        joyDebounceTimer = millis();
+        ldrCooldown = true;
+        ldrDebounceTimer = millis();
+        if (spinning && spinPhase >= 1 && spinPhase <= 3) {
+          if (spinPhase == 1) {
+            stepperX.moveTo(((stepperX.currentPosition() / 20) + 1) * 20);
+            spinPhase = 2;
+          } else if (spinPhase == 2) {
+            stepperY.moveTo(((stepperY.currentPosition() / 20) + 1) * 20);
+            spinPhase = 3;
+          } else if (spinPhase == 3) {
+            stepperZ.moveTo(((stepperZ.currentPosition() / 20) + 1) * 20);
+            spinPhase = 4;
+          }
+        } else if (coinDropped) {
+          playingCoinSong = false;
+          playingSpinSong = true;
+          currentNote = 0;
+          waitingForNote = false;
           spinning = true;
-          spinEndTime = millis() + 5000;
+          spinPhase = 1;
+          stepperX.moveTo(stepperX.currentPosition() + SPIN_TARGET);
+          stepperY.moveTo(stepperY.currentPosition() + SPIN_TARGET);
+          stepperZ.moveTo(stepperZ.currentPosition() + SPIN_TARGET);
           breathR = 255;
           breathG = 0;
           breathB = 0;
@@ -475,7 +749,6 @@ void loop()
           greenFadeRising = true;
           greenFadeTimer = millis();
         } else {
-          Serial.println("down");
           if (!rainbowMode) {
             breathR = 0;
             breathG = 255;
@@ -504,7 +777,7 @@ void loop()
         }
         break;
       case 2: // Wait at open for coin to fall
-        if (millis() - dispenseTimer >= 500) {
+        if (millis() - dispenseTimer >= 1500) {
           dispenseTimer = millis();
           dispenseStep = 3;
         }
@@ -524,7 +797,7 @@ void loop()
         }
         break;
       case 4: // Wait before next coin
-        if (millis() - dispenseTimer >= 500) {
+        if (millis() - dispenseTimer >= 2000) {
           coinsToDispense--;
           if (coinsToDispense > 0) {
             dispenseStep = 1;
