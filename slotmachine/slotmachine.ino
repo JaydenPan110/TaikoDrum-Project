@@ -729,7 +729,10 @@ void loop()
             stepperY.moveTo(((stepperY.currentPosition() / 20) + 1) * 20);
             spinPhase = 3;
           } else if (spinPhase == 3) {
-            stepperZ.moveTo(((stepperZ.currentPosition() / 20) + 1) * 20);
+            long pos = stepperZ.currentPosition();
+            long target = ((pos / 20) + 1) * 20;
+            while (target - pos < 80) target += 20;
+            stepperZ.moveTo(target);
             spinPhase = 4;
           }
         } else if (coinDropped) {
