@@ -1,10 +1,8 @@
-**Arduino Slot Machine
-**
+**Arduino Slot Machine**
 
 This is an interactive slot machine with three wheels. Each wheel has 10 different symbols, and if the wheels show the same symbol, the user gets a jackpot. The user inserts a coin to activate the system, then switches the joystick down to spin the physical reels. Each time the user presses the joystick down, it stops all motors until they have stopped. Each motor self-adjusts to display a specific symbol to the user. If the user hits a jackpot, a specialized dispensing mechanism triggers a payout.
 
-**Component List
-**
+**Component List**
 
 Nema 17 Stepper Motors x3
 
@@ -49,8 +47,7 @@ Freenove 8 RGB LED Ring x1
 
 
 
-**History of changes from the initial proposal and early drafts
-**
+**History of changes from the initial proposal and early drafts**
 
 In our original design, we planned for an activated button: when the user inserts a valid 25-cent coin into the coin slot, the machine plays a beep indicating that the coin has been accepted, and the user can press the button to activate it. 
 
