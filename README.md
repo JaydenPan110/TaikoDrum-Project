@@ -1,66 +1,57 @@
-**Arduino Slot Machine**
+# Arduino Slot Machine
 
-This is an interactive slot machine with three wheels. Each wheel has 10 different symbols, and if the wheels show the same symbol, the user gets a jackpot. The user inserts a coin to activate the system, then switches the joystick down to spin the physical reels. Each time the user presses the joystick down, it stops all motors until they have stopped. Each motor self-adjusts to display a specific symbol to the user. If the user hits a jackpot, a specialized dispensing mechanism triggers a payout.
+An interactive, hardware-driven slot machine featuring three physical reels, automated coin detection, a joystick lever mechanism, and a custom payout dispenser. 
 
-**Component List**
+---
 
-Nema 17 Stepper Motors x3
+## Project Overview
 
-M2.5 Screws and Nuts x12
+This project is a physical, interactive slot machine powered by dual Arduino microcontrollers. The system replicates a classic casino game loop using automated mechanical and electronic components:
 
-Arduino UNOs x2 
+1. **Coin Insertion:** The user inserts a coin into the slot to arm the machine.
+2. **The Spin:** Pulling the joystick down triggers three independent reels to spin. 
+3. **The Stop:** Each motor sequentially self-adjusts to display a specific symbol to the user.
+4. **The Payout:** If all three wheels align on the same symbol, a jackpot is triggered, activating a specialized servo-driven dispensing mechanism for a physical payout.
 
-3D Prints
+---
 
-RGB LED x1
+## Component List
 
-Photoresistor x1
+| Category | Item | Quantity |
+| :--- | :--- | :--- |
+| **Microcontrollers & Shields** | Arduino UNO | 2 |
+| | CNC Shield | 1 |
+| **Actuators & Motors** | Nema 17 Stepper Motor | 3 |
+| | Servo Motor | 1 |
+| **Sensors & Inputs** | Analog Joystick | 1 |
+| | Photoresistor (LDR) | 1 |
+| | Infrared (IR) Receiver | 1 |
+| | Infrared (IR) Remote | 1 |
+| **Display & Audio** | Freenove 8 RGB LED Ring | 1 |
+| | RGB LED | 1 |
+| | Passive Buzzer | 1 |
+| **Power & Cabling** | 12V 5A AC to DC Power Converter | 1 |
+| | USB Cable | 1 |
+| | Jumper Wires (M/M & M/F) | Assortment |
+| **Discrete Components** | Resistors (220Ω, 1kΩ, 10kΩ) | Various |
+| **Hardware & Enclosure** | 3D Printed Components (Reels/Gears) | Custom |
+| | M2.5 Screws and Nuts | 12 |
+| | Wood Support Brackets & Housing | Custom |
 
-Servo Motor x1
+---
 
-12V 5A AC to DC converter x1
+## Project Evolution & Changelog
 
-Jumper Wires M/M
+The design of this slot machine evolved significantly during prototyping to adapt to structural requirements and improve user experience:
 
-Passive Buzzer x1
+### Input Mechanism: From Push-Button to Joystick
+* **Original Plan:** A simple arcade button to trigger the spin sequence after coin validation.
+* **Revision:** Replaced the button and its status LED with an analog joystick. Pulling the joystick down provides a more tactile, satisfying "slot machine lever" feel.
 
-USB Cable x1
+### Coin Detection: From Optical Interruption to Contact Sensing
+* **Original Plan:** A break-beam sensor configuration where a falling coin temporarily blocked an LED shining on a detector.
+* **Revision:** Simplified to a direct-contact photoresistor setup inside the coin chute. Integrated a passive buzzer audio cue to sound a confirmation tone immediately upon reliable detection.
 
-Resistors 10kΩ 
-
-Jumper Wires M/F
-
-Resistors 220Ω
-
-Resistors 1kΩ
-
-CNC Shield x1
-
-Joystick x1
-
-IR Remote x1
-
-IR Receiver x1
-
-Freenove 8 RGB LED Ring x1
-
-
-
-
-**History of changes from the initial proposal and early drafts**
-
-In our original design, we planned for an activated button: when the user inserts a valid 25-cent coin into the coin slot, the machine plays a beep indicating that the coin has been accepted, and the user can press the button to activate it. 
-
-The change we will make as a result of this decision will be to replace the LED where the button was with a joystick. We will detect the joystick's x and y positions and, if it's pulled up or down, the reels will spin.
-
-Another change we made from the original proposal is the usage of the photo resistor. Previously, we used an LED that a coin would block when inserted into the slot. 
-
-Instead, we realized that the photoresistor actually worked on contact with the coin, so we ditched the LED design and just made the photoresistor interact with the coin, and made the buzzer beep every time it detected it for testing and user purposes
-
-Additionally, we also changed our housing design entirely.  Due to printing complications and time constraints. We had to redesign our housing using cardboard, and we’ve reached an issue of durability because it may not hold the step motors. We instead used wood to hold up the step motors and that has worked successfully
-
-
-
-
-
-
+### Enclosure Design: From Cardboard to Reinforced Wood
+* **Original Plan:** A fully 3D-printed enclosure or light cardboard housing.
+* **Revision:** 3D printing the entire structural shell proved too time-consuming, while cardboard lacked the structural integrity to support the torque and weight of three Nema 17 stepper motors. The structural framing was redesigned using wood, successfully neutralizing motor vibrations and improving overall system durability.
