@@ -38,7 +38,11 @@ This project is a physical, interactive slot machine powered by dual Arduino mic
 | | M2.5 Screws and Nuts | 12 |
 | | Wood Support Brackets & Housing | Custom |
 
----
+## Schmatic Pictures
+
+<img width="1919" height="1079" alt="Screenshot 2026-06-17 191529" src="https://github.com/user-attachments/assets/ae5775c6-0e2c-4cef-bafe-2a77cb37c89e" />
+<img width="1620" height="883" alt="Screenshot 2026-06-17 191602" src="https://github.com/user-attachments/assets/fbe489da-55d2-48c3-8d0b-07a2e9baaac3" />
+
 
 ## Project Evolution & Changelog
 
