@@ -62,3 +62,7 @@ The design of this slot machine evolved significantly during prototyping to adap
 ### Enclosure Design: From Cardboard to Reinforced Wood
 * **Original Plan:** A fully 3D-printed enclosure or light cardboard housing.
 * **Revision:** 3D printing the entire structural shell proved too time-consuming, while cardboard lacked the structural integrity to support the torque and weight of three Nema 17 stepper motors. The structural framing was redesigned using wood, successfully neutralizing motor vibrations and improving overall system durability.
+
+
+
+credit to [WhiteStudio](https://makerworld.com/en/models/1272917-nanoslot-modular-arduino-based-slot-machine-w-rtp?from=search#profileId-1300082) for CAD models
